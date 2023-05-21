@@ -7,10 +7,10 @@ export class AppController {
 
   @Get()
   @Render('index')
-  root() {
-    this.appService.getRows();
+  async root() {
+    const rows = await this.appService.getRows();
     return {
-      rolls: [{ player: 'tegg', type: 'survival', total: 10, damage: '' }],
+      rolls: rows,
     };
   }
 

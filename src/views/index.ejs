@@ -14,15 +14,6 @@
         <th>Note</th>
         <th></th>
       </tr>
-      <% rolls.forEach((roll)=>{ %>
-      <tr>
-        <td><%= roll.player %></td>
-        <td><%= roll.type %></td>
-        <td><%= roll.total %></td>
-        <td><%= roll.damage %></td>
-        <td><%= roll.note %></td>
-      </tr>
-      <% }) %>
       <tr>
         <td>
           <form id="form1" method="post">
@@ -100,6 +91,15 @@
           <input form="form1" type="submit" value="Save" />
         </td>
       </tr>
+      <% rolls.forEach((roll)=>{ %>
+      <tr>
+        <td><%= roll.player %></td>
+        <td><%= roll.type %></td>
+        <td><%= roll.total %></td>
+        <td><%= roll.damage %></td>
+        <td><%= roll.note %></td>
+      </tr>
+      <% }) %>
     </table>
   </body>
 </html>

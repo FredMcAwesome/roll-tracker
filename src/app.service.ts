@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MikroORM } from '@mikro-orm/core';
+import { MikroORM, QueryOrder } from '@mikro-orm/core';
 import { EntityManager } from '@mikro-orm/postgresql';
 import { PlayerEnum, Rolls, RollTypeEnum } from './entities/rolls.entity';
 import { rollInput } from './app.controller';
@@ -11,11 +11,16 @@ export class AppService {
     private readonly em: EntityManager,
   ) {}
 
-  getRows() {
-    return true;
+  async getRows() {
+    const rows = await this.em.find(
+      Rolls,
+      {},
+      { orderBy: { _id: QueryOrder.DESC } },
+    );
+    return rows;
   }
 
-  async postRow(roll: rollInput) {
+  postRow(roll: rollInput) {
     const row = this.em.create(Rolls, {
       player: PlayerEnum[roll.player],
       rollType: RollTypeEnum[roll.type],
