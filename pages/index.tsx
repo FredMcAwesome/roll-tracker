@@ -1,5 +1,7 @@
+import { Rolls } from "../entities/rolls";
 import { trpcNext } from "../utils/trpc";
-import RollInput from "./rollInput";
+import RollInput from "./rolls/rollInput";
+import RollRow from "./rolls/rollRow";
 
 export default function IndexPage() {
   const { data, error, isError, isLoading } = trpcNext.getRows.useQuery();
@@ -24,16 +26,8 @@ export default function IndexPage() {
         </thead>
         <tbody>
           <RollInput />
-          {data.rows.map((roll) => {
-            return (
-              <tr key={roll._id}>
-                <td>{roll.player}</td>
-                <td>{roll.rollType}</td>
-                <td>{roll.total}</td>
-                <td>{roll.damage}</td>
-                <td>{roll.note}</td>
-              </tr>
-            );
+          {data.rows.map((roll: Rolls) => {
+            return <RollRow roll={roll} key={roll._id} />;
           })}
         </tbody>
       </table>

@@ -12,34 +12,69 @@ export const appRouter = router({
       {},
       { orderBy: { _id: QueryOrder.DESC } }
     );
-    // return rows;
 
     return {
       rows: rows,
     };
   }),
+
   postRow: baseProcedure
     .input(
       z.object({
         player: z.nativeEnum(PlayerEnum),
-        type: z.nativeEnum(RollTypeEnum),
+        rollType: z.nativeEnum(RollTypeEnum),
         total: z.optional(z.number()),
         damage: z.optional(z.number()),
         note: z.string(),
       })
     )
-    .mutation((opts) => {
+    .mutation(async (opts) => {
       const orm = opts.ctx.orm;
       const roll = opts.input;
       const row = orm.em.create(Rolls, {
         player: roll.player,
-        rollType: roll.type,
+        rollType: roll.rollType,
         ...(roll.total !== undefined && { total: roll.total }),
         ...(roll.damage !== undefined && { damage: roll.damage }),
         note: roll.note,
       });
-      orm.em.persistAndFlush(row);
+      await orm.em.persistAndFlush(row);
       console.log(row);
+    }),
+
+  updateRow: baseProcedure
+    .input(
+      z.object({
+        _id: z.number(),
+        player: z.nativeEnum(PlayerEnum),
+        rollType: z.nativeEnum(RollTypeEnum),
+        total: z.optional(z.number()),
+        damage: z.optional(z.number()),
+        note: z.string(),
+      })
+    )
+    .mutation(async (opts) => {
+      const orm = opts.ctx.orm;
+      const roll = opts.input;
+      const ref = orm.em.getReference(Rolls, roll._id);
+      (ref.player = roll.player), (ref.rollType = roll.rollType);
+      if (roll.total !== undefined) ref.total = roll.total;
+      if (roll.damage !== undefined) ref.damage = roll.damage;
+      ref.note = roll.note;
+      await orm.em.flush();
+    }),
+
+  deleteRow: baseProcedure
+    .input(
+      z.object({
+        _id: z.number(),
+      })
+    )
+    .mutation(async (opts) => {
+      const orm = opts.ctx.orm;
+      const roll = opts.input;
+      const ref = orm.em.getReference(Rolls, roll._id);
+      await orm.em.remove(ref).flush();
     }),
 });
 // export type definition of API

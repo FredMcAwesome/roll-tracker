@@ -21,5 +21,3 @@ export class Rolls {
   @Property()
   note!: string;
 }
-
-export { PlayerEnum, RollTypeEnum } from "../utils/definitions";
