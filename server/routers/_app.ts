@@ -1,6 +1,7 @@
 import { QueryOrder } from "@mikro-orm/core";
 import { z } from "zod";
-import { PlayerEnum, Rolls, RollTypeEnum } from "../../entities/rolls";
+import { Rolls } from "../../entities/rolls";
+import { PlayerEnum, RollTypeEnum } from "../../utils/definitions";
 import { baseProcedure } from "../trpc/base";
 import { router } from "../trpc/trpc";
 export const appRouter = router({
@@ -31,8 +32,8 @@ export const appRouter = router({
       const orm = opts.ctx.orm;
       const roll = opts.input;
       const row = orm.em.create(Rolls, {
-        player: PlayerEnum[roll.player],
-        rollType: RollTypeEnum[roll.type],
+        player: roll.player,
+        rollType: roll.type,
         ...(roll.total !== undefined && { total: roll.total }),
         ...(roll.damage !== undefined && { damage: roll.damage }),
         note: roll.note,
