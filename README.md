@@ -2,7 +2,10 @@ This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next
 
 ## Getting Started
 
-First, run the development server:
+First, create the db:
+TS_NODE_COMPILER_OPTIONS='{"module":"commonjs"}' npx ts-node --esm ./create-schema.ts
+
+Then run the development server:
 
 ```bash
 npm run dev

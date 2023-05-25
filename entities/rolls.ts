@@ -1,5 +1,5 @@
 import { Entity, Enum, EnumType, PrimaryKey, Property } from "@mikro-orm/core";
-import { PlayerEnum, RollTypeEnum } from "../utils/definitions";
+import { AdvantageEnum, PlayerEnum, RollTypeEnum } from "../utils/definitions";
 
 @Entity()
 export class Rolls {
@@ -12,12 +12,30 @@ export class Rolls {
   @Enum({ type: EnumType, items: () => RollTypeEnum })
   rollType!: RollTypeEnum;
 
+  @Enum({ type: EnumType, items: () => AdvantageEnum })
+  advantageStatus!: AdvantageEnum;
+
   @Property({ nullable: true })
-  total?: number;
+  naturalRoll?: number;
+
+  @Property({ nullable: true })
+  naturalRollAdvantage?: number;
+
+  @Property({ nullable: true })
+  finalRoll?: number;
+
+  @Property({ nullable: true })
+  rollBonus?: number;
 
   @Property({ nullable: true })
   damage?: number;
 
+  @Property({ nullable: true })
+  damageBonus?: number;
+
   @Property()
   note!: string;
+
+  @Property()
+  session!: number;
 }

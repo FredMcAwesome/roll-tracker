@@ -3,12 +3,10 @@ import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 import { Rolls } from "./entities/rolls";
 
 const dbOptions: Options<PostgreSqlDriver> = {
-  entities: [
-    Rolls
-  ],
+  entities: [Rolls],
   type: "postgresql",
-  dbName: 'db',
-  password: 'password',
+  dbName: "db",
+  password: "password",
   port: 5435,
   forceUndefined: true,
 };

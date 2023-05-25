@@ -1,13 +1,24 @@
 import { ChangeEvent, useState } from "react";
-import { PlayerEnum, RollTypeEnum } from "../../utils/definitions";
-import { trpcNext } from "../../utils/trpc";
+import { AdvantageEnum, PlayerEnum, RollTypeEnum } from "../definitions";
+import { trpcNext } from "../trpc";
 
-export default function RollInput() {
+interface IProps {
+  session: number;
+}
+
+export default function RollInput({ session }: IProps) {
   const [player, setPlayer] = useState<PlayerEnum>(PlayerEnum.aaron);
   const [rollType, setRollType] = useState<RollTypeEnum>(
     RollTypeEnum.skill_Acrobatics
   );
-  const [total, setTotal] = useState<number>();
+  const [advantageStatus, setAdvantageStatus] = useState<AdvantageEnum>(
+    AdvantageEnum.normal
+  );
+  const [naturalRoll, setNaturalRoll] = useState<number | undefined>();
+  const [naturalRollAdvantage, setNaturalRollAdvantage] = useState<
+    number | undefined
+  >();
+  const [finalRoll, setFinalRoll] = useState<number | undefined>();
   const [damage, setDamage] = useState<number>();
   const [note, setNote] = useState<string>("");
 
@@ -23,18 +34,47 @@ export default function RollInput() {
       setRollType(e.target.value as RollTypeEnum);
   };
 
-  const onTotalChange = function (e: ChangeEvent<HTMLInputElement>) {
+  const onAdvantageStatusChange = function (e: ChangeEvent<HTMLSelectElement>) {
+    if (Object.values(AdvantageEnum).includes(e.target.value as AdvantageEnum))
+      setAdvantageStatus(e.target.value as AdvantageEnum);
+  };
+
+  const onNaturalRollChange = function (e: ChangeEvent<HTMLInputElement>) {
     const value = !Number.isNaN(e.target.valueAsNumber)
       ? e.target.valueAsNumber
       : null;
-    if (value) setTotal(value);
+    const cleared = e.target.value === "";
+    if (value) setNaturalRoll(value);
+    if (cleared) setNaturalRoll(undefined);
+  };
+
+  const onNaturalRollAdvantageChange = function (
+    e: ChangeEvent<HTMLInputElement>
+  ) {
+    const value = !Number.isNaN(e.target.valueAsNumber)
+      ? e.target.valueAsNumber
+      : null;
+    const cleared = e.target.value === "";
+    if (value) setNaturalRollAdvantage(value);
+    if (cleared) setNaturalRollAdvantage(undefined);
+  };
+
+  const onFinalRollChange = function (e: ChangeEvent<HTMLInputElement>) {
+    const value = !Number.isNaN(e.target.valueAsNumber)
+      ? e.target.valueAsNumber
+      : null;
+    const cleared = e.target.value === "";
+    if (value) setFinalRoll(value);
+    if (cleared) setFinalRoll(undefined);
   };
 
   const onDamageChange = function (e: ChangeEvent<HTMLInputElement>) {
     const value = !Number.isNaN(e.target.valueAsNumber)
       ? e.target.valueAsNumber
       : null;
+    const cleared = e.target.value === "";
     if (value) setDamage(value);
+    if (cleared) setDamage(undefined);
   };
 
   const onNoteChange = function (e: ChangeEvent<HTMLInputElement>) {
@@ -45,9 +85,13 @@ export default function RollInput() {
     mutateAsync({
       player: player,
       rollType: rollType,
-      total: total,
+      advantageStatus: advantageStatus,
+      naturalRoll: naturalRoll,
+      naturalRollAdvantage: naturalRollAdvantage,
+      finalRoll: finalRoll,
       damage: damage,
       note: note,
+      session: session,
     });
   }
 
@@ -57,13 +101,19 @@ export default function RollInput() {
         _id: -1,
         player: player,
         rollType: rollType,
-        total: total,
+        advantageStatus: advantageStatus,
+        naturalRoll: naturalRoll,
+        naturalRollAdvantage: naturalRollAdvantage,
+        finalRoll: finalRoll,
         damage: damage,
         note: note,
       }}
       onPlayerChange={onPlayerChange}
       onRollTypeChange={onRollTypeChange}
-      onTotalChange={onTotalChange}
+      onAdvantageStatusChange={onAdvantageStatusChange}
+      onNaturalRollChange={onNaturalRollChange}
+      onNaturalRollAdvantageChange={onNaturalRollAdvantageChange}
+      onFinalRollChange={onFinalRollChange}
       onDamageChange={onDamageChange}
       onNoteChange={onNoteChange}
       handleSubmit={handleSubmit}
@@ -77,19 +127,36 @@ interface IOtherProps {
     _id: number;
     player: PlayerEnum;
     rollType: RollTypeEnum;
-    total: number | undefined;
+    advantageStatus: AdvantageEnum;
+    naturalRoll: number | undefined;
+    naturalRollAdvantage: number | undefined;
+    finalRoll: number | undefined;
     damage: number | undefined;
     note: string;
   };
   onPlayerChange: (e: ChangeEvent<HTMLSelectElement>) => void;
   onRollTypeChange: (e: ChangeEvent<HTMLSelectElement>) => void;
-  onTotalChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onAdvantageStatusChange: (e: ChangeEvent<HTMLSelectElement>) => void;
+  onNaturalRollChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onNaturalRollAdvantageChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onFinalRollChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onDamageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onNoteChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 }
 
 export const EditableRow = function (props: IOtherProps) {
+  const damageDisabled = function () {
+    switch (props.data.rollType) {
+      case RollTypeEnum.attack_Melee:
+      case RollTypeEnum.attack_Ranged:
+      case RollTypeEnum.attack_Spell:
+      case RollTypeEnum.other_Damage:
+        return false;
+      default:
+        return true;
+    }
+  };
   return (
     <tr>
       <td>
@@ -118,17 +185,56 @@ export const EditableRow = function (props: IOtherProps) {
         </select>
       </td>
       <td>
+        <select
+          form={props.data._id + "form"}
+          name="type"
+          value={props.data.advantageStatus}
+          onChange={props.onAdvantageStatusChange}
+        >
+          <AdvantageOptions />
+        </select>
+      </td>
+      <td>
         <input
           form={props.data._id + "form"}
           type="number"
-          name="total"
-          value={props.data.total ?? ""}
+          name="naturalRoll"
+          value={props.data.naturalRoll ?? ""}
           onKeyDown={(event) => {
-            if (!/[0-9]/.test(event.key)) {
+            if (!numberOnlyRegEx.test(event.key)) {
               event.preventDefault();
             }
           }}
-          onChange={props.onTotalChange}
+          onChange={props.onNaturalRollChange}
+        />
+      </td>
+      <td>
+        <input
+          form={props.data._id + "form"}
+          type="number"
+          name="naturalRollAdvantage"
+          disabled={props.data.advantageStatus === AdvantageEnum.normal}
+          value={props.data.naturalRollAdvantage ?? ""}
+          onKeyDown={(event) => {
+            if (!numberOnlyRegEx.test(event.key)) {
+              event.preventDefault();
+            }
+          }}
+          onChange={props.onNaturalRollAdvantageChange}
+        />
+      </td>
+      <td>
+        <input
+          form={props.data._id + "form"}
+          type="number"
+          name="finalRoll"
+          value={props.data.finalRoll ?? ""}
+          onKeyDown={(event) => {
+            if (!numberOnlyRegEx.test(event.key)) {
+              event.preventDefault();
+            }
+          }}
+          onChange={props.onFinalRollChange}
         />
       </td>
       <td>
@@ -136,9 +242,10 @@ export const EditableRow = function (props: IOtherProps) {
           form={props.data._id + "form"}
           type="number"
           name="damage"
+          disabled={damageDisabled()}
           value={props.data.damage ?? ""}
           onKeyDown={(event) => {
-            if (!/[0-9]/.test(event.key)) {
+            if (!numberOnlyRegEx.test(event.key)) {
               event.preventDefault();
             }
           }}
@@ -160,6 +267,10 @@ export const EditableRow = function (props: IOtherProps) {
     </tr>
   );
 };
+
+const numberOnlyRegEx = new RegExp(
+  /[0-9]|(Backspace)|(Delete)|(Clear)|(Cut)|(Undo)|(Redo)/
+);
 
 export const PlayerOptions = function () {
   return (
@@ -232,6 +343,16 @@ export const SkillCheckOptions = function () {
         <option value={RollTypeEnum.other_SecondWind}>Second Wind</option>
         <option value={RollTypeEnum.other_Custom}>Custom</option>
       </optgroup>
+    </>
+  );
+};
+
+export const AdvantageOptions = function () {
+  return (
+    <>
+      <option value={AdvantageEnum.advantage}>Advantage</option>
+      <option value={AdvantageEnum.normal}>Normal</option>
+      <option value={AdvantageEnum.disadvantage}>Disadvantage</option>
     </>
   );
 };

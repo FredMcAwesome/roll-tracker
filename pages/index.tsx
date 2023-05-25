@@ -1,36 +1,28 @@
-import { Rolls } from "../entities/rolls";
-import { trpcNext } from "../utils/trpc";
-import RollInput from "./rolls/rollInput";
-import RollRow from "./rolls/rollRow";
+import { redirect, useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function IndexPage() {
-  const { data, error, isError, isLoading } = trpcNext.getRows.useQuery();
-  if (isLoading) {
-    return <div>Loading...</div>;
-  } else if (isError) {
-    return <div>Error...</div>;
-  }
+  const maxSession = parseInt(process.env.SESSION_NUMBER || "1");
 
+  const router = useRouter();
+  const [route, setRoute] = useState();
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    router.push("/" + route);
+  };
   return (
     <div>
-      <table>
-        <thead>
-          <tr>
-            <th>Player</th>
-            <th>Roll type</th>
-            <th>Total</th>
-            <th>Damage</th>
-            <th>Note</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <RollInput />
-          {data.rows.map((roll: Rolls) => {
-            return <RollRow roll={roll} key={roll._id} />;
-          })}
-        </tbody>
-      </table>
+      <h1>Go to session:</h1>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          name="route"
+          onChange={(e) => {
+            setRoute(e.target.value);
+          }}
+        />
+        <button type="submit">Submit</button>
+      </form>
     </div>
   );
 }

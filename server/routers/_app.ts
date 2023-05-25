@@ -1,15 +1,19 @@
 import { QueryOrder } from "@mikro-orm/core";
 import { z } from "zod";
 import { Rolls } from "../../entities/rolls";
-import { PlayerEnum, RollTypeEnum } from "../../utils/definitions";
+import {
+  AdvantageEnum,
+  PlayerEnum,
+  RollTypeEnum,
+} from "../../utils/definitions";
 import { baseProcedure } from "../trpc/base";
 import { router } from "../trpc/trpc";
 export const appRouter = router({
-  getRows: baseProcedure.query(async (opts) => {
+  getRows: baseProcedure.input(z.number()).query(async (opts) => {
     const orm = opts.ctx.orm;
     const rows = await orm.em.find(
       Rolls,
-      {},
+      { session: opts.input },
       { orderBy: { _id: QueryOrder.DESC } }
     );
 
@@ -23,9 +27,13 @@ export const appRouter = router({
       z.object({
         player: z.nativeEnum(PlayerEnum),
         rollType: z.nativeEnum(RollTypeEnum),
-        total: z.optional(z.number()),
+        advantageStatus: z.nativeEnum(AdvantageEnum),
+        naturalRoll: z.optional(z.number()),
+        naturalRollAdvantage: z.optional(z.number()),
+        finalRoll: z.optional(z.number()),
         damage: z.optional(z.number()),
         note: z.string(),
+        session: z.number(),
       })
     )
     .mutation(async (opts) => {
@@ -34,9 +42,19 @@ export const appRouter = router({
       const row = orm.em.create(Rolls, {
         player: roll.player,
         rollType: roll.rollType,
-        ...(roll.total !== undefined && { total: roll.total }),
+        advantageStatus: roll.advantageStatus,
+        ...(roll.naturalRoll !== undefined && {
+          naturalRoll: roll.naturalRoll,
+        }),
+        ...(roll.naturalRollAdvantage !== undefined && {
+          naturalRollAdvantage: roll.naturalRollAdvantage,
+        }),
+        ...(roll.finalRoll !== undefined && {
+          finalRoll: roll.finalRoll,
+        }),
         ...(roll.damage !== undefined && { damage: roll.damage }),
         note: roll.note,
+        session: roll.session,
       });
       await orm.em.persistAndFlush(row);
       console.log(row);
@@ -48,7 +66,9 @@ export const appRouter = router({
         _id: z.number(),
         player: z.nativeEnum(PlayerEnum),
         rollType: z.nativeEnum(RollTypeEnum),
-        total: z.optional(z.number()),
+        advantageStatus: z.nativeEnum(AdvantageEnum),
+        naturalRoll: z.optional(z.number()),
+        naturalRollAdvantage: z.optional(z.number()),
         damage: z.optional(z.number()),
         note: z.string(),
       })
@@ -57,8 +77,12 @@ export const appRouter = router({
       const orm = opts.ctx.orm;
       const roll = opts.input;
       const ref = orm.em.getReference(Rolls, roll._id);
-      (ref.player = roll.player), (ref.rollType = roll.rollType);
-      if (roll.total !== undefined) ref.total = roll.total;
+      ref.player = roll.player;
+      ref.rollType = roll.rollType;
+      ref.advantageStatus = roll.advantageStatus;
+      if (roll.naturalRoll !== undefined) ref.naturalRoll = roll.naturalRoll;
+      if (roll.naturalRollAdvantage !== undefined)
+        ref.naturalRollAdvantage = roll.naturalRollAdvantage;
       if (roll.damage !== undefined) ref.damage = roll.damage;
       ref.note = roll.note;
       await orm.em.flush();

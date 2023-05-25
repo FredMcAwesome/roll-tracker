@@ -1,18 +1,31 @@
 import { ChangeEvent, useState } from "react";
 import { Rolls } from "../../entities/rolls";
-import { PlayerEnum, RollTypeEnum } from "../../utils/definitions";
-import { trpcNext } from "../../utils/trpc";
+import { AdvantageEnum, PlayerEnum, RollTypeEnum } from "../definitions";
+import { trpcNext } from "../trpc";
 import { EditableRow } from "./rollInput";
 
 interface IProps {
   roll: Rolls;
+  session: number;
 }
 export default function RollRow(props: IProps) {
   const [isEditing, setIsEditing] = useState<boolean>(false);
 
   const [player, setPlayer] = useState<PlayerEnum>(props.roll.player);
   const [rollType, setRollType] = useState<RollTypeEnum>(props.roll.rollType);
-  const [total, setTotal] = useState<number | undefined>(props.roll.total);
+  const [advantageStatus, setAdvantageStatus] = useState<AdvantageEnum>(
+    props.roll.advantageStatus
+  );
+  const [naturalRoll, setNaturalRoll] = useState<number | undefined>(
+    props.roll.naturalRoll
+  );
+  const [naturalRollAdvantage, setNaturalRollAdvantage] = useState<
+    number | undefined
+  >(props.roll.naturalRoll);
+  const [finalRoll, setFinalRoll] = useState<number | undefined>(
+    props.roll.finalRoll
+  );
+
   const [damage, setDamage] = useState<number | undefined>(props.roll.damage);
   const [note, setNote] = useState<string>(props.roll.note);
 
@@ -28,18 +41,47 @@ export default function RollRow(props: IProps) {
       setRollType(e.target.value as RollTypeEnum);
   };
 
-  const onTotalChange = function (e: ChangeEvent<HTMLInputElement>) {
+  const onAdvantageStatusChange = function (e: ChangeEvent<HTMLSelectElement>) {
+    if (Object.values(AdvantageEnum).includes(e.target.value as AdvantageEnum))
+      setAdvantageStatus(e.target.value as AdvantageEnum);
+  };
+
+  const onNaturalRollChange = function (e: ChangeEvent<HTMLInputElement>) {
     const value = !Number.isNaN(e.target.valueAsNumber)
       ? e.target.valueAsNumber
       : null;
-    if (value) setTotal(value);
+    const cleared = e.target.value === "";
+    if (value) setNaturalRoll(value);
+    if (cleared) setNaturalRoll(undefined);
+  };
+
+  const onNaturalRollAdvantageChange = function (
+    e: ChangeEvent<HTMLInputElement>
+  ) {
+    const value = !Number.isNaN(e.target.valueAsNumber)
+      ? e.target.valueAsNumber
+      : null;
+    const cleared = e.target.value === "";
+    if (value) setNaturalRollAdvantage(value);
+    if (cleared) setNaturalRollAdvantage(undefined);
+  };
+
+  const onFinalRollChange = function (e: ChangeEvent<HTMLInputElement>) {
+    const value = !Number.isNaN(e.target.valueAsNumber)
+      ? e.target.valueAsNumber
+      : null;
+    const cleared = e.target.value === "";
+    if (value) setFinalRoll(value);
+    if (cleared) setFinalRoll(undefined);
   };
 
   const onDamageChange = function (e: ChangeEvent<HTMLInputElement>) {
     const value = !Number.isNaN(e.target.valueAsNumber)
       ? e.target.valueAsNumber
       : null;
+    const cleared = e.target.value === "";
     if (value) setDamage(value);
+    if (cleared) setDamage(undefined);
   };
 
   const onNoteChange = function (e: ChangeEvent<HTMLInputElement>) {
@@ -56,7 +98,9 @@ export default function RollRow(props: IProps) {
       _id: props.roll._id,
       player: player,
       rollType: rollType,
-      total: total,
+      advantageStatus: advantageStatus,
+      naturalRoll: naturalRoll,
+      naturalRollAdvantage: naturalRollAdvantage,
       damage: damage,
       note: note,
     });
@@ -69,9 +113,12 @@ export default function RollRow(props: IProps) {
         _id: props.roll._id,
         player: player,
         rollType: rollType,
-        total: total,
+        advantageStatus: advantageStatus,
+        naturalRoll: naturalRoll,
+        naturalRollAdvantage: naturalRollAdvantage,
         damage: damage,
         note: note,
+        session: props.session,
       }}
       editing={flipEdit}
     />
@@ -81,13 +128,19 @@ export default function RollRow(props: IProps) {
         _id: props.roll._id,
         player: player,
         rollType: rollType,
-        total: total,
+        advantageStatus: advantageStatus,
+        naturalRoll: naturalRoll,
+        naturalRollAdvantage: naturalRollAdvantage,
+        finalRoll: finalRoll,
         damage: damage,
         note: note,
       }}
       onPlayerChange={onPlayerChange}
       onRollTypeChange={onRollTypeChange}
-      onTotalChange={onTotalChange}
+      onAdvantageStatusChange={onAdvantageStatusChange}
+      onNaturalRollChange={onNaturalRollChange}
+      onNaturalRollAdvantageChange={onNaturalRollAdvantageChange}
+      onFinalRollChange={onFinalRollChange}
       onDamageChange={onDamageChange}
       onNoteChange={onNoteChange}
       handleSubmit={handleSubmit}
@@ -119,7 +172,10 @@ function RollDisplay(props: IBothProps) {
     <tr key={props.roll._id + " Display row"}>
       <td>{props.roll.player}</td>
       <td>{props.roll.rollType}</td>
-      <td>{props.roll.total}</td>
+      <td>{props.roll.advantageStatus}</td>
+      <td>{props.roll.naturalRoll}</td>
+      <td>{props.roll.naturalRollAdvantage}</td>
+      <td>{props.roll.finalRoll}</td>
       <td>{props.roll.damage}</td>
       <td>{props.roll.note}</td>
       <td>

@@ -1,12 +1,13 @@
-import { MikroORM, Options } from '@mikro-orm/core';
-import { PostgreSqlDriver } from '@mikro-orm/postgresql';
+import { MikroORM, Options } from "@mikro-orm/core";
+import { PostgreSqlDriver } from "@mikro-orm/postgresql";
 
 const dbOptions: Options<PostgreSqlDriver> = {
-  entities: ['./dist/**/*.entity.js'],
-  type: 'postgresql',
+  entities: ["./dist/**/*.entity.js"],
+  entitiesTs: ["./entities/*.ts"],
+  type: "postgresql",
   port: 5435,
-  dbName: 'db',
-  password: 'password',
+  dbName: "db",
+  password: "password",
   forceUndefined: true,
 };
 

@@ -1,3 +1,8 @@
+export enum AdvantageEnum {
+  advantage = "advantage",
+  disadvantage = "disadvantage",
+  normal = "normal",
+}
 
 export enum PlayerEnum {
   aaron = "aaron",
