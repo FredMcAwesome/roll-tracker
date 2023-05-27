@@ -11,11 +11,10 @@ import { router } from "../trpc/trpc";
 export const appRouter = router({
   getRows: baseProcedure.input(z.number()).query(async (opts) => {
     const orm = opts.ctx.orm;
-    const rows = await orm.em.find(
-      Rolls,
-      { session: opts.input },
-      { orderBy: { _id: QueryOrder.DESC } }
-    );
+    const whereClause = opts.input === 0 ? {} : { session: opts.input };
+    const rows = await orm.em.find(Rolls, whereClause, {
+      orderBy: { _id: QueryOrder.DESC },
+    });
 
     return {
       rows: rows,

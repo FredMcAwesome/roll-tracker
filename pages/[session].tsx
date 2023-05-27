@@ -4,6 +4,7 @@ import RollInput from "../utils/rolls/rollInput";
 import RollRow from "../utils/rolls/rollRow";
 import { useRouter } from "next/router";
 import { GetServerSideProps } from "next";
+import { useState } from "react";
 
 interface ISession {
   sessionIn: string | undefined;
@@ -19,13 +20,20 @@ export const getServerSideProps: GetServerSideProps<ISession> = async function (
 };
 
 export default function Page({ sessionIn }: ISession) {
-  const r = useRouter();
+  const router = useRouter();
+  const goToStats = () => {
+    router.push("/");
+  };
+  const goToCurrentSession = () => {
+    router.push("/" + maxSession);
+  };
 
-  console.log(r.query);
-  const maxSession = parseInt(process.env.SESSION_NUMBER || "1");
-  const session = parseInt(sessionIn || "") || maxSession;
-  console.log(`session = ${session}`);
-  console.log(`maxSession = ${maxSession}`);
+  const maxSession = parseInt(process.env.NEXT_PUBLIC_SESSION_NUMBER || "1");
+  let session = parseInt(sessionIn || "");
+  if (session === undefined) session = maxSession;
+  // console.log(`maxSession = ${maxSession}`);
+  // console.log(`sessionIn = ${sessionIn}`);
+  // console.log(`session = ${session}`);
   const { data, error, isError, isLoading } =
     trpcNext.getRows.useQuery(session);
 
@@ -37,6 +45,12 @@ export default function Page({ sessionIn }: ISession) {
 
   return (
     <div>
+      <button type="submit" onClick={goToStats}>
+        Go to Stat overview
+      </button>
+      <button type="submit" onClick={goToCurrentSession}>
+        Go to current session (Session {maxSession})
+      </button>
       <h1>Session {session}</h1>
       <table>
         <thead>

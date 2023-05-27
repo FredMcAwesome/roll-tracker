@@ -40,22 +40,30 @@ export default function RollInput({ session }: IProps) {
   };
 
   const onNaturalRollChange = function (e: ChangeEvent<HTMLInputElement>) {
-    const value = !Number.isNaN(e.target.valueAsNumber)
+    let value = !Number.isNaN(e.target.valueAsNumber)
       ? e.target.valueAsNumber
       : null;
     const cleared = e.target.value === "";
-    if (value) setNaturalRoll(value);
+    if (value) {
+      if (value > 20) value = 20;
+      else if (value < 1) value = 1;
+      setNaturalRoll(value);
+    }
     if (cleared) setNaturalRoll(undefined);
   };
 
   const onNaturalRollAdvantageChange = function (
     e: ChangeEvent<HTMLInputElement>
   ) {
-    const value = !Number.isNaN(e.target.valueAsNumber)
+    let value = !Number.isNaN(e.target.valueAsNumber)
       ? e.target.valueAsNumber
       : null;
     const cleared = e.target.value === "";
-    if (value) setNaturalRollAdvantage(value);
+    if (value) {
+      if (value > 20) value = 20;
+      else if (value < 1) value = 1;
+      setNaturalRollAdvantage(value);
+    }
     if (cleared) setNaturalRollAdvantage(undefined);
   };
 
