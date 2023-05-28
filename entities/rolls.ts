@@ -25,6 +25,9 @@ export class Rolls {
   finalRoll?: number;
 
   @Property({ nullable: true })
+  hit?: boolean;
+
+  @Property({ nullable: true })
   rollBonus?: number;
 
   @Property({ nullable: true })

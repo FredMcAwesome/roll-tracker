@@ -1,6 +1,10 @@
 import { ChangeEvent, useState } from "react";
-import { AdvantageEnum, PlayerEnum, RollTypeEnum } from "../definitions";
-import { trpcNext } from "../trpc";
+import {
+  AdvantageEnum,
+  PlayerEnum,
+  RollTypeEnum,
+} from "../../utils/definitions";
+import { trpcNext } from "../../utils/trpc";
 
 interface IProps {
   session: number;
@@ -19,6 +23,7 @@ export default function RollInput({ session }: IProps) {
     number | undefined
   >();
   const [finalRoll, setFinalRoll] = useState<number | undefined>();
+  const [hit, setHit] = useState<boolean | undefined>();
   const [damage, setDamage] = useState<number>();
   const [note, setNote] = useState<string>("");
 
@@ -76,6 +81,10 @@ export default function RollInput({ session }: IProps) {
     if (cleared) setFinalRoll(undefined);
   };
 
+  const onHitChange = function (e: ChangeEvent<HTMLInputElement>) {
+    setHit(!hit);
+  };
+
   const onDamageChange = function (e: ChangeEvent<HTMLInputElement>) {
     const value = !Number.isNaN(e.target.valueAsNumber)
       ? e.target.valueAsNumber
@@ -97,6 +106,7 @@ export default function RollInput({ session }: IProps) {
       naturalRoll: naturalRoll,
       naturalRollAdvantage: naturalRollAdvantage,
       finalRoll: finalRoll,
+      hit: hit,
       damage: damage,
       note: note,
       session: session,
@@ -113,6 +123,7 @@ export default function RollInput({ session }: IProps) {
         naturalRoll: naturalRoll,
         naturalRollAdvantage: naturalRollAdvantage,
         finalRoll: finalRoll,
+        hit: hit,
         damage: damage,
         note: note,
       }}
@@ -122,6 +133,7 @@ export default function RollInput({ session }: IProps) {
       onNaturalRollChange={onNaturalRollChange}
       onNaturalRollAdvantageChange={onNaturalRollAdvantageChange}
       onFinalRollChange={onFinalRollChange}
+      onHitChange={onHitChange}
       onDamageChange={onDamageChange}
       onNoteChange={onNoteChange}
       handleSubmit={handleSubmit}
@@ -139,6 +151,7 @@ interface IOtherProps {
     naturalRoll: number | undefined;
     naturalRollAdvantage: number | undefined;
     finalRoll: number | undefined;
+    hit: boolean | undefined;
     damage: number | undefined;
     note: string;
   };
@@ -148,6 +161,7 @@ interface IOtherProps {
   onNaturalRollChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onNaturalRollAdvantageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onFinalRollChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  onHitChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onDamageChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onNoteChange: (e: ChangeEvent<HTMLInputElement>) => void;
   handleSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -175,6 +189,7 @@ export const EditableRow = function (props: IOtherProps) {
         >
           <select
             name="player"
+            className="select select-primary"
             value={props.data.player}
             onChange={props.onPlayerChange}
           >
@@ -186,6 +201,7 @@ export const EditableRow = function (props: IOtherProps) {
         <select
           form={props.data._id + "form"}
           name="type"
+          className="select select-primary"
           value={props.data.rollType}
           onChange={props.onRollTypeChange}
         >
@@ -196,6 +212,7 @@ export const EditableRow = function (props: IOtherProps) {
         <select
           form={props.data._id + "form"}
           name="type"
+          className="select select-primary"
           value={props.data.advantageStatus}
           onChange={props.onAdvantageStatusChange}
         >
@@ -208,6 +225,7 @@ export const EditableRow = function (props: IOtherProps) {
           type="number"
           name="naturalRoll"
           value={props.data.naturalRoll ?? ""}
+          className="input input-secondary w-20"
           onKeyDown={(event) => {
             if (!numberOnlyRegEx.test(event.key)) {
               event.preventDefault();
@@ -221,6 +239,7 @@ export const EditableRow = function (props: IOtherProps) {
           form={props.data._id + "form"}
           type="number"
           name="naturalRollAdvantage"
+          className="input input-secondary w-20"
           disabled={props.data.advantageStatus === AdvantageEnum.normal}
           value={props.data.naturalRollAdvantage ?? ""}
           onKeyDown={(event) => {
@@ -236,6 +255,7 @@ export const EditableRow = function (props: IOtherProps) {
           form={props.data._id + "form"}
           type="number"
           name="finalRoll"
+          className="input input-secondary w-20"
           value={props.data.finalRoll ?? ""}
           onKeyDown={(event) => {
             if (!numberOnlyRegEx.test(event.key)) {
@@ -248,8 +268,20 @@ export const EditableRow = function (props: IOtherProps) {
       <td>
         <input
           form={props.data._id + "form"}
+          type="checkbox"
+          name="hit"
+          className="checkbox mx-1"
+          disabled={damageDisabled()}
+          checked={props.data.hit ?? false}
+          onChange={props.onHitChange}
+        />
+      </td>
+      <td>
+        <input
+          form={props.data._id + "form"}
           type="number"
           name="damage"
+          className="input input-secondary w-20"
           disabled={damageDisabled()}
           value={props.data.damage ?? ""}
           onKeyDown={(event) => {
@@ -265,12 +297,18 @@ export const EditableRow = function (props: IOtherProps) {
           form={props.data._id + "form"}
           type="text"
           name="note"
+          className="input input-bordered"
           value={props.data.note}
           onChange={props.onNoteChange}
         />
       </td>
       <td>
-        <input form={props.data._id + "form"} type="submit" value="Save" />
+        <input
+          form={props.data._id + "form"}
+          type="submit"
+          value="Save"
+          className="btn"
+        />
       </td>
     </tr>
   );

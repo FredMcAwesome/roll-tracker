@@ -61,24 +61,39 @@ export default function IndexPage() {
     e.preventDefault();
     router.push("/" + route);
   };
+  const goToCurrentSession = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    router.push("/" + maxSession);
+  };
   return (
     <div>
-      <h1>Go to session:</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} className="flex mt-2 gap-1">
+        <label htmlFor="route" className="label">
+          Go to session:
+        </label>
         <input
           type="text"
           name="route"
+          className="px-2"
           onChange={(e) => {
             setRoute(e.target.value);
           }}
         />
-        <button type="submit">Submit</button>
+        <button type="submit" className="btn">
+          Submit
+        </button>
+        <button type="button" className="btn" onClick={goToCurrentSession}>
+          Go to Current Session ({maxSession})
+        </button>
       </form>
-      <p>Current Session = {maxSession}</p>
+      <h1 className="hero text-xl">
+        {session !== 0 ? "Session " + session : "All sessions"}
+      </h1>
       {!isLoading && !isError && <MyChart data={rollData} />}
       <select
         name="session"
         value={session}
+        className="select select-info"
         onChange={(e) => {
           const value = !Number.isNaN(e.target.value)
             ? parseInt(e.target.value)

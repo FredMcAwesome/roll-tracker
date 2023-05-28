@@ -1,7 +1,7 @@
 import { Rolls } from "../entities/rolls";
 import { trpcNext } from "../utils/trpc";
-import RollInput from "../utils/rolls/rollInput";
-import RollRow from "../utils/rolls/rollRow";
+import RollInput from "./rolls/rollInput";
+import RollRow from "./rolls/rollRow";
 import { useRouter } from "next/router";
 import { GetServerSideProps } from "next";
 import { useState } from "react";
@@ -45,22 +45,25 @@ export default function Page({ sessionIn }: ISession) {
 
   return (
     <div>
-      <button type="submit" onClick={goToStats}>
-        Go to Stat overview
-      </button>
-      <button type="submit" onClick={goToCurrentSession}>
-        Go to current session (Session {maxSession})
-      </button>
-      <h1>Session {session}</h1>
+      <div className="navbar">
+        <button type="submit" onClick={goToStats} className="btn m-2">
+          Go to Stat overview
+        </button>
+        <button type="submit" onClick={goToCurrentSession} className="btn m-2">
+          Go to current session (Session {maxSession})
+        </button>
+      </div>
+      <h1 className="hero text-xl">Session {session}</h1>
       <table>
         <thead>
           <tr>
             <th>Player</th>
             <th>Roll type</th>
             <th>Advantage?</th>
-            <th>Natural Roll</th>
-            <th>Advantage Roll</th>
+            <th>Nat Roll</th>
+            <th>Adv Roll</th>
             <th>Final Roll</th>
+            <th>Hit?</th>
             <th>Damage</th>
             <th>Note</th>
             <th></th>

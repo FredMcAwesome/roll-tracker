@@ -30,6 +30,7 @@ export const appRouter = router({
         naturalRoll: z.optional(z.number()),
         naturalRollAdvantage: z.optional(z.number()),
         finalRoll: z.optional(z.number()),
+        hit: z.optional(z.boolean()),
         damage: z.optional(z.number()),
         note: z.string(),
         session: z.number(),
@@ -68,6 +69,8 @@ export const appRouter = router({
         advantageStatus: z.nativeEnum(AdvantageEnum),
         naturalRoll: z.optional(z.number()),
         naturalRollAdvantage: z.optional(z.number()),
+        finalRoll: z.optional(z.number()),
+        hit: z.optional(z.boolean()),
         damage: z.optional(z.number()),
         note: z.string(),
       })
@@ -82,6 +85,8 @@ export const appRouter = router({
       if (roll.naturalRoll !== undefined) ref.naturalRoll = roll.naturalRoll;
       if (roll.naturalRollAdvantage !== undefined)
         ref.naturalRollAdvantage = roll.naturalRollAdvantage;
+      if (roll.finalRoll !== undefined) ref.finalRoll = roll.finalRoll;
+      if (roll.hit !== undefined) ref.hit = roll.hit;
       if (roll.damage !== undefined) ref.damage = roll.damage;
       ref.note = roll.note;
       await orm.em.flush();

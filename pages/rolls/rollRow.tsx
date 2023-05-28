@@ -1,7 +1,11 @@
 import { ChangeEvent, useState } from "react";
 import { Rolls } from "../../entities/rolls";
-import { AdvantageEnum, PlayerEnum, RollTypeEnum } from "../definitions";
-import { trpcNext } from "../trpc";
+import {
+  AdvantageEnum,
+  PlayerEnum,
+  RollTypeEnum,
+} from "../../utils/definitions";
+import { trpcNext } from "../../utils/trpc";
 import { EditableRow } from "./rollInput";
 
 interface IProps {
@@ -25,7 +29,7 @@ export default function RollRow(props: IProps) {
   const [finalRoll, setFinalRoll] = useState<number | undefined>(
     props.roll.finalRoll
   );
-
+  const [hit, setHit] = useState<boolean | undefined>(props.roll.hit);
   const [damage, setDamage] = useState<number | undefined>(props.roll.damage);
   const [note, setNote] = useState<string>(props.roll.note);
 
@@ -83,6 +87,10 @@ export default function RollRow(props: IProps) {
     if (cleared) setFinalRoll(undefined);
   };
 
+  const onHitChange = function (e: ChangeEvent<HTMLInputElement>) {
+    setHit(!hit);
+  };
+
   const onDamageChange = function (e: ChangeEvent<HTMLInputElement>) {
     const value = !Number.isNaN(e.target.valueAsNumber)
       ? e.target.valueAsNumber
@@ -109,6 +117,7 @@ export default function RollRow(props: IProps) {
       advantageStatus: advantageStatus,
       naturalRoll: naturalRoll,
       naturalRollAdvantage: naturalRollAdvantage,
+      hit: hit,
       damage: damage,
       note: note,
     });
@@ -124,6 +133,8 @@ export default function RollRow(props: IProps) {
         advantageStatus: advantageStatus,
         naturalRoll: naturalRoll,
         naturalRollAdvantage: naturalRollAdvantage,
+        finalRoll: finalRoll,
+        hit: hit,
         damage: damage,
         note: note,
         session: props.session,
@@ -140,6 +151,7 @@ export default function RollRow(props: IProps) {
         naturalRoll: naturalRoll,
         naturalRollAdvantage: naturalRollAdvantage,
         finalRoll: finalRoll,
+        hit: hit,
         damage: damage,
         note: note,
       }}
@@ -149,6 +161,7 @@ export default function RollRow(props: IProps) {
       onNaturalRollChange={onNaturalRollChange}
       onNaturalRollAdvantageChange={onNaturalRollAdvantageChange}
       onFinalRollChange={onFinalRollChange}
+      onHitChange={onHitChange}
       onDamageChange={onDamageChange}
       onNoteChange={onNoteChange}
       handleSubmit={handleSubmit}
@@ -184,6 +197,7 @@ function RollDisplay(props: IBothProps) {
       <td>{props.roll.naturalRoll}</td>
       <td>{props.roll.naturalRollAdvantage}</td>
       <td>{props.roll.finalRoll}</td>
+      <td>{props.roll.hit}</td>
       <td>{props.roll.damage}</td>
       <td>{props.roll.note}</td>
       <td>
