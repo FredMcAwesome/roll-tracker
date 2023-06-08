@@ -133,7 +133,7 @@ const SessionOptions = function (props: ISessionProps) {
   );
 };
 
-const MyChart = function ({ data }) {
+const MyChart = function ({ data }: any) {
   return <Bar data={data} />;
 };
 

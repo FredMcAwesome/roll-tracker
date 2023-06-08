@@ -1,10 +1,11 @@
 import { Rolls } from "../entities/rolls";
 import { trpcNext } from "../utils/trpc";
-import RollInput from "./rolls/rollInput";
-import RollRow from "./rolls/rollRow";
+import RollInput from "../components/rolls/rollInput";
+import RollRow from "../components/rolls/rollRow";
 import { useRouter } from "next/router";
 import { GetServerSideProps } from "next";
-import { useState } from "react";
+import { PlayerEnum, zodPlayerEnum } from "../utils/definitions";
+import { useEffect, useState } from "react";
 
 interface ISession {
   sessionIn: string | undefined;
@@ -20,6 +21,8 @@ export const getServerSideProps: GetServerSideProps<ISession> = async function (
 };
 
 export default function Page({ sessionIn }: ISession) {
+  const [rain, setRain] = useState<PlayerEnum | "None">();
+  const { mutateAsync } = trpcNext.setIsThatRain.useMutation();
   const router = useRouter();
   const goToStats = () => {
     router.push("/");
@@ -36,11 +39,28 @@ export default function Page({ sessionIn }: ISession) {
   // console.log(`session = ${session}`);
   const { data, error, isError, isLoading } =
     trpcNext.getRows.useQuery(session);
+  const rainResult = trpcNext.getIsThatRain.useQuery(session);
+
+  useEffect(() => {
+    if (rainResult.data !== undefined) setRain(rainResult.data);
+  }, [rainResult.data]);
 
   if (isLoading) {
     return <div>Loading...</div>;
   } else if (isError) {
     return <div>Error...</div>;
+  }
+
+  function handleSubmit(e: React.ChangeEvent<HTMLSelectElement>) {
+    const player = zodPlayerEnum.safeParse(e.target.value);
+
+    if (player.success) {
+      setRain(player.data);
+      mutateAsync({
+        session: session,
+        player: player.data,
+      });
+    }
   }
 
   return (
@@ -52,6 +72,17 @@ export default function Page({ sessionIn }: ISession) {
         <button type="submit" onClick={goToCurrentSession} className="btn m-2">
           Go to current session (Session {maxSession})
         </button>
+        <label className="label navbar-end">
+          Is that Rain?
+          <select
+            name="player"
+            className="select select-primary ml-2"
+            value={rain}
+            onChange={handleSubmit}
+          >
+            <IsThatRainOptions />
+          </select>
+        </label>
       </div>
       <h1 className="hero text-xl">Session {session}</h1>
       <table>
@@ -79,3 +110,15 @@ export default function Page({ sessionIn }: ISession) {
     </div>
   );
 }
+
+export const IsThatRainOptions = function () {
+  return (
+    <>
+      <option value={"None"}>No one</option>
+      <option value={PlayerEnum.aaron}>Aaron</option>
+      <option value={PlayerEnum.connor}>Connor</option>
+      <option value={PlayerEnum.tegg}>Tegg</option>
+      <option value={PlayerEnum.thomas}>Thomas</option>
+    </>
+  );
+};

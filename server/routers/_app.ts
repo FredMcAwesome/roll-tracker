@@ -1,10 +1,12 @@
 import { QueryOrder } from "@mikro-orm/core";
 import { z } from "zod";
+import { IsThatRainResults } from "../../entities/isThatRain";
 import { Rolls } from "../../entities/rolls";
 import {
   AdvantageEnum,
   PlayerEnum,
   RollTypeEnum,
+  zodPlayerEnum,
 } from "../../utils/definitions";
 import { baseProcedure } from "../trpc/base";
 import { router } from "../trpc/trpc";
@@ -37,6 +39,7 @@ export const appRouter = router({
       })
     )
     .mutation(async (opts) => {
+      console.log(opts.input.hit);
       const orm = opts.ctx.orm;
       const roll = opts.input;
       const row = orm.em.create(Rolls, {
@@ -51,6 +54,9 @@ export const appRouter = router({
         }),
         ...(roll.finalRoll !== undefined && {
           finalRoll: roll.finalRoll,
+        }),
+        ...(roll.hit !== undefined && {
+          hit: roll.hit,
         }),
         ...(roll.damage !== undefined && { damage: roll.damage }),
         note: roll.note,
@@ -103,6 +109,42 @@ export const appRouter = router({
       const roll = opts.input;
       const ref = orm.em.getReference(Rolls, roll._id);
       await orm.em.remove(ref).flush();
+    }),
+
+  getIsThatRain: baseProcedure.input(z.number()).query(async (opts) => {
+    const orm = opts.ctx.orm;
+    const playerResult = await orm.em.findOne(IsThatRainResults, {
+      session: opts.input,
+    });
+    const player = playerResult === null ? "None" : playerResult.player;
+
+    return player;
+  }),
+  setIsThatRain: baseProcedure
+    .input(
+      z.object({
+        session: z.number(),
+        player: zodPlayerEnum,
+      })
+    )
+    .mutation(async (opts) => {
+      const orm = opts.ctx.orm;
+      const session = opts.input.session;
+      const player = opts.input.player;
+      const rainSession = await orm.em.findOne(IsThatRainResults, {
+        session: session,
+      });
+      if (rainSession !== null) {
+        rainSession.player = player;
+      } else {
+        const rain = orm.em.create(IsThatRainResults, {
+          session: session,
+          player: player,
+        });
+        orm.em.persist(rain);
+        console.log(rain);
+      }
+      await orm.em.flush();
     }),
 });
 // export type definition of API

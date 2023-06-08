@@ -25,7 +25,7 @@ export default function RollRow(props: IProps) {
   );
   const [naturalRollAdvantage, setNaturalRollAdvantage] = useState<
     number | undefined
-  >(props.roll.naturalRoll);
+  >(props.roll.naturalRollAdvantage);
   const [finalRoll, setFinalRoll] = useState<number | undefined>(
     props.roll.finalRoll
   );
@@ -55,7 +55,7 @@ export default function RollRow(props: IProps) {
       ? e.target.valueAsNumber
       : null;
     const cleared = e.target.value === "";
-    if (value) {
+    if (value !== null) {
       if (value > 20) value = 20;
       else if (value < 1) value = 1;
       setNaturalRoll(value);
@@ -70,7 +70,7 @@ export default function RollRow(props: IProps) {
       ? e.target.valueAsNumber
       : null;
     const cleared = e.target.value === "";
-    if (value) {
+    if (value !== null) {
       if (value > 20) value = 20;
       else if (value < 1) value = 1;
       setNaturalRollAdvantage(value);
@@ -83,7 +83,7 @@ export default function RollRow(props: IProps) {
       ? e.target.valueAsNumber
       : null;
     const cleared = e.target.value === "";
-    if (value) setFinalRoll(value);
+    if (value !== null) setFinalRoll(value);
     if (cleared) setFinalRoll(undefined);
   };
 
@@ -197,7 +197,7 @@ function RollDisplay(props: IBothProps) {
       <td>{props.roll.naturalRoll}</td>
       <td>{props.roll.naturalRollAdvantage}</td>
       <td>{props.roll.finalRoll}</td>
-      <td>{props.roll.hit}</td>
+      <td>{props.roll.hit && "Y"}</td>
       <td>{props.roll.damage}</td>
       <td>{props.roll.note}</td>
       <td>

@@ -1,3 +1,5 @@
+import { z as zod } from "zod";
+
 export enum AdvantageEnum {
   advantage = "advantage",
   disadvantage = "disadvantage",
@@ -10,6 +12,8 @@ export enum PlayerEnum {
   tegg = "tegg",
   thomas = "thomas",
 }
+
+export const zodPlayerEnum = zod.nativeEnum(PlayerEnum);
 
 export enum RollTypeEnum {
   skill_Acrobatics = "skill_Acrobatics",
@@ -50,5 +54,6 @@ export enum RollTypeEnum {
   other_Damage = "other_damage",
   other_Initiative = "other_initiative",
   other_SecondWind = "other_secondWind",
+  other_HaloOfSpores = "other_haloOfSpores",
   other_Custom = "other_custom",
 }

@@ -49,7 +49,7 @@ export default function RollInput({ session }: IProps) {
       ? e.target.valueAsNumber
       : null;
     const cleared = e.target.value === "";
-    if (value) {
+    if (value !== null) {
       if (value > 20) value = 20;
       else if (value < 1) value = 1;
       setNaturalRoll(value);
@@ -64,7 +64,7 @@ export default function RollInput({ session }: IProps) {
       ? e.target.valueAsNumber
       : null;
     const cleared = e.target.value === "";
-    if (value) {
+    if (value !== null) {
       if (value > 20) value = 20;
       else if (value < 1) value = 1;
       setNaturalRollAdvantage(value);
@@ -77,7 +77,7 @@ export default function RollInput({ session }: IProps) {
       ? e.target.valueAsNumber
       : null;
     const cleared = e.target.value === "";
-    if (value) setFinalRoll(value);
+    if (value !== null) setFinalRoll(value);
     if (cleared) setFinalRoll(undefined);
   };
 
@@ -174,6 +174,7 @@ export const EditableRow = function (props: IOtherProps) {
       case RollTypeEnum.attack_Ranged:
       case RollTypeEnum.attack_Spell:
       case RollTypeEnum.other_Damage:
+      case RollTypeEnum.other_HaloOfSpores:
         return false;
       default:
         return true;
@@ -205,7 +206,7 @@ export const EditableRow = function (props: IOtherProps) {
           value={props.data.rollType}
           onChange={props.onRollTypeChange}
         >
-          <SkillCheckOptions />
+          <SkillCheckOptions player={props.data.player} />
         </select>
       </td>
       <td>
@@ -329,7 +330,11 @@ export const PlayerOptions = function () {
   );
 };
 
-export const SkillCheckOptions = function () {
+interface ISkillCheckProps {
+  player: PlayerEnum;
+}
+
+export const SkillCheckOptions = function (props: ISkillCheckProps) {
   return (
     <>
       <optgroup label="Skill Checks">
@@ -386,7 +391,14 @@ export const SkillCheckOptions = function () {
       <optgroup label="Other">
         <option value={RollTypeEnum.other_Damage}>Damage</option>
         <option value={RollTypeEnum.other_Initiative}>Initiative</option>
-        <option value={RollTypeEnum.other_SecondWind}>Second Wind</option>
+        {props.player == PlayerEnum.aaron && (
+          <option value={RollTypeEnum.other_SecondWind}>Second Wind</option>
+        )}
+        {props.player == PlayerEnum.tegg && (
+          <option value={RollTypeEnum.other_HaloOfSpores}>
+            Halo of Spores (Damage)
+          </option>
+        )}
         <option value={RollTypeEnum.other_Custom}>Custom</option>
       </optgroup>
     </>
