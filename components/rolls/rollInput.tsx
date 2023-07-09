@@ -330,7 +330,7 @@ export const PlayerOptions = function () {
   );
 };
 
-interface ISkillCheckProps {
+export interface ISkillCheckProps {
   player: PlayerEnum;
 }
 

@@ -1,6 +1,7 @@
 import { redirect, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
+  BarController,
   BarElement,
   CategoryScale,
   Chart as ChartJS,
@@ -11,19 +12,24 @@ import {
   LinearScale,
   LineElement,
   PointElement,
+  ScatterController,
   Title,
   Tooltip,
 } from "chart.js";
 import { Bar, Chart } from "react-chartjs-2";
 import { trpcNext } from "../utils/trpc";
-import { PlayerEnum } from "../utils/definitions";
+import { PlayerEnum, RollTypeEnum } from "../utils/definitions";
 import { Rolls } from "../entities/rolls";
+import { ISkillCheckProps } from "../components/rolls/rollInput";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
   PointElement,
+  LineElement,
+  BarController,
+  ScatterController,
   Title,
   Tooltip,
   Legend,
@@ -34,7 +40,7 @@ export default function IndexPage() {
   const maxSession = parseInt(process.env.NEXT_PUBLIC_SESSION_NUMBER || "1");
   const { data, error, isError, isLoading } = trpcNext.getRows.useQuery(0);
   const [session, setSession] = useState(0);
-  const [rollData, setRollData] = useState(() => {
+  const [d20RollData, setD20RollData] = useState(() => {
     const rolls = getD20RollValues(data?.rows, session);
     return {
       labels: Object.values(PlayerEnum),
@@ -66,22 +72,55 @@ export default function IndexPage() {
       ],
     };
   });
+  const [attackRollData, setAttackRollData] = useState(() => {
+    const attackRolls = getAttackRollValues(data?.rows, session);
+    return {
+      labels: Object.values(PlayerEnum),
+      datasets: [
+        {
+          type: "bar" as const,
+          label: "Total Damage",
+          data: attackRolls.totalDamage,
+          order: 2,
+        },
+        {
+          type: "scatter" as const,
+          label: "Average Damage Rolls",
+          data: attackRolls.averageDamage,
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          borderWidth: 2,
+          order: 1,
+        },
+        {
+          type: "scatter" as const,
+          label: "D20 Attack Hit Percentage",
+          data: attackRolls.hitPercentage,
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          borderWidth: 2,
+          order: 1,
+        },
+      ],
+    };
+  });
 
   useEffect(() => {
-    const rolls = getD20RollValues(data?.rows, session);
-    setRollData({
+    const d20Rolls = getD20RollValues(data?.rows, session);
+    const attackRolls = getAttackRollValues(data?.rows, session);
+    setD20RollData({
       labels: Object.values(PlayerEnum),
       datasets: [
         {
           type: "bar" as const,
           label: "Average D20 Rolls",
-          data: rolls.average,
+          data: d20Rolls.average,
           order: 2,
         },
         {
           type: "scatter" as const,
           label: "Minimum D20 Roll",
-          data: rolls.minimum,
+          data: d20Rolls.minimum,
           pointRadius: 7,
           pointHoverRadius: 10,
           borderWidth: 2,
@@ -90,7 +129,36 @@ export default function IndexPage() {
         {
           type: "scatter" as const,
           label: "Maximum D20 Roll",
-          data: rolls.maximum,
+          data: d20Rolls.maximum,
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          borderWidth: 2,
+          order: 1,
+        },
+      ],
+    });
+    setAttackRollData({
+      labels: Object.values(PlayerEnum),
+      datasets: [
+        {
+          type: "bar" as const,
+          label: "Total Damage",
+          data: attackRolls.totalDamage,
+          order: 2,
+        },
+        {
+          type: "scatter" as const,
+          label: "Average Damage Rolls",
+          data: attackRolls.averageDamage,
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          borderWidth: 2,
+          order: 1,
+        },
+        {
+          type: "scatter" as const,
+          label: "D20 Attack Hit Percentage",
+          data: attackRolls.hitPercentage,
           pointRadius: 7,
           pointHoverRadius: 10,
           borderWidth: 2,
@@ -132,23 +200,27 @@ export default function IndexPage() {
         </button>
       </form>
       <h1 className="hero text-xl">
-        {session !== 0 ? "Session " + session : "All sessions"}
+        <select
+          name="session"
+          value={session}
+          className="select select-info"
+          onChange={(e) => {
+            const value = !Number.isNaN(e.target.value)
+              ? parseInt(e.target.value)
+              : null;
+            const cleared = e.target.value === "";
+            if (value !== null) setSession(value);
+          }}
+        >
+          <SessionOptions maxSession={maxSession} />
+        </select>
       </h1>
-      {!isLoading && !isError && <MyChart data={rollData} />}
-      <select
-        name="session"
-        value={session}
-        className="select select-info"
-        onChange={(e) => {
-          const value = !Number.isNaN(e.target.value)
-            ? parseInt(e.target.value)
-            : null;
-          const cleared = e.target.value === "";
-          if (value !== null) setSession(value);
-        }}
-      >
-        <SessionOptions maxSession={maxSession} />
-      </select>
+      {!isLoading && !isError && (
+        <MyChart data={d20RollData} title={"D20 Rolls"} />
+      )}
+      {!isLoading && !isError && (
+        <MyChart data={attackRollData} title={"Attack Rolls"} />
+      )}
     </div>
   );
 }
@@ -178,8 +250,25 @@ const SessionOptions = function (props: ISessionProps) {
   );
 };
 
-const MyChart = function ({ data }: any) {
-  return <Chart type="bar" data={data} />;
+const MyChart = function ({ data, title }: any) {
+  return (
+    <Chart
+      type="bar"
+      data={data}
+      options={{
+        plugins: {
+          title: {
+            display: true,
+            text: title,
+            padding: {
+              top: 20,
+              bottom: 10,
+            },
+          },
+        },
+      }}
+    />
+  );
 };
 
 const getD20RollValues = function (rows: Rolls[] | undefined, session: number) {
@@ -274,4 +363,207 @@ const getD20RollValues = function (rows: Rolls[] | undefined, session: number) {
       thomas: playerList[3].maximumRoll,
     },
   };
+};
+
+const getAttackRollValues = function (
+  rows: Rolls[] | undefined,
+  session: number
+) {
+  const playerList: Array<{
+    rolls: number;
+    totalDamage: number;
+    hits: number;
+    misses: number;
+  }> = [
+    {
+      rolls: 0,
+      totalDamage: 0,
+      hits: 0,
+      misses: 0,
+    },
+    {
+      rolls: 0,
+      totalDamage: 0,
+      hits: 0,
+      misses: 0,
+    },
+    {
+      rolls: 0,
+      totalDamage: 0,
+      hits: 0,
+      misses: 0,
+    },
+    {
+      rolls: 0,
+      totalDamage: 0,
+      hits: 0,
+      misses: 0,
+    },
+  ];
+  if (rows === undefined) return {};
+  const selectedRow = rows.filter((row) => {
+    if (session == 0) return true;
+    return row.session == session;
+  });
+  selectedRow.forEach((element) => {
+    if (
+      !(
+        element.rollType === RollTypeEnum.attack_Melee ||
+        element.rollType === RollTypeEnum.attack_Ranged ||
+        element.rollType === RollTypeEnum.attack_Spell ||
+        element.rollType === RollTypeEnum.other_Damage ||
+        element.rollType === RollTypeEnum.other_HaloOfSpores ||
+        (element.rollType === RollTypeEnum.other_Custom &&
+          element.damage !== undefined)
+      )
+    ) {
+      return;
+    }
+    let playerNumber = 0;
+    switch (element.player) {
+      case PlayerEnum.aaron:
+        playerNumber = 0;
+        break;
+      case PlayerEnum.connor:
+        playerNumber = 1;
+        break;
+      case PlayerEnum.tegg:
+        playerNumber = 2;
+        break;
+      case PlayerEnum.thomas:
+        playerNumber = 3;
+        break;
+    }
+    if (element.damage !== undefined) {
+      playerList[playerNumber].totalDamage += element.damage;
+    }
+    if (element.naturalRoll !== undefined) {
+      playerList[playerNumber].rolls++;
+      if (element.hit) {
+        playerList[playerNumber].hits++;
+      } else {
+        playerList[playerNumber].misses++;
+      }
+    }
+  });
+  // checks to avoid divide by 0 errors
+  const averageDamage = [0, 0, 0, 0];
+  if (playerList[0].hits !== 0)
+    averageDamage[0] = playerList[0].totalDamage / playerList[0].hits;
+  if (playerList[1].hits !== 0)
+    averageDamage[1] = playerList[1].totalDamage / playerList[1].hits;
+  if (playerList[2].hits !== 0)
+    averageDamage[2] = playerList[2].totalDamage / playerList[2].hits;
+  if (playerList[3].hits !== 0)
+    averageDamage[3] = playerList[3].totalDamage / playerList[3].hits;
+
+  const hitPercentage = [0, 0, 0, 0];
+  if (playerList[0].rolls !== 0) {
+    hitPercentage[0] =
+      playerList[0].hits / (playerList[0].hits + playerList[0].misses);
+  }
+  if (playerList[1].rolls !== 0) {
+    hitPercentage[1] =
+      playerList[1].hits / (playerList[1].hits + playerList[1].misses);
+  }
+  if (playerList[2].rolls !== 0) {
+    hitPercentage[2] =
+      playerList[2].hits / (playerList[2].hits + playerList[2].misses);
+  }
+  if (playerList[3].rolls !== 0) {
+    hitPercentage[3] =
+      playerList[3].hits / (playerList[3].hits + playerList[3].misses);
+  }
+
+  return {
+    averageDamage: {
+      aaron: averageDamage[0],
+      connor: averageDamage[1],
+      tegg: averageDamage[2],
+      thomas: averageDamage[3],
+    },
+    hitPercentage: {
+      aaron: hitPercentage[0] * 100,
+      connor: hitPercentage[1] * 100,
+      tegg: hitPercentage[2] * 100,
+      thomas: hitPercentage[3] * 100,
+    },
+    totalDamage: {
+      aaron: playerList[0].totalDamage,
+      connor: playerList[1].totalDamage,
+      tegg: playerList[2].totalDamage,
+      thomas: playerList[3].totalDamage,
+    },
+  };
+};
+
+export const SkillCheckOptions = function (props: ISkillCheckProps) {
+  return (
+    <>
+      <optgroup label="Skill Checks">
+        <option value={RollTypeEnum.skill_Acrobatics}>Acrobatics</option>
+        <option value={RollTypeEnum.skill_AnimalHandling}>
+          Animal Handling
+        </option>
+        <option value={RollTypeEnum.skill_Arcana}>Arcana</option>
+        <option value={RollTypeEnum.skill_Athletics}>Athletics</option>
+        <option value={RollTypeEnum.skill_Deception}>Deception</option>
+        <option value={RollTypeEnum.skill_History}>History</option>
+        <option value={RollTypeEnum.skill_Insight}>Insight</option>
+        <option value={RollTypeEnum.skill_Intimidation}>Intimidation</option>
+        <option value={RollTypeEnum.skill_Investigation}>Investigation</option>
+        <option value={RollTypeEnum.skill_Medicine}>Medicine</option>
+        <option value={RollTypeEnum.skill_Nature}>Nature</option>
+        <option value={RollTypeEnum.skill_Perception}>Perception</option>
+        <option value={RollTypeEnum.skill_Performance}>Performance</option>
+        <option value={RollTypeEnum.skill_Persuasion}>Persuasion</option>
+        <option value={RollTypeEnum.skill_Religion}>Religion</option>
+        <option value={RollTypeEnum.skill_SleightOfHand}>
+          Sleight of Hand
+        </option>
+        <option value={RollTypeEnum.skill_Stealth}>Stealth</option>
+        <option value={RollTypeEnum.skill_Survival}>Survival</option>
+        <option value={RollTypeEnum.skill_Tool}>Tool</option>
+      </optgroup>
+      <optgroup label="Saving Throw">
+        <option value={RollTypeEnum.savingThrow_Strength}>Strength</option>
+        <option value={RollTypeEnum.savingThrow_Dexterity}>Dexterity</option>
+        <option value={RollTypeEnum.savingThrow_Constitution}>
+          Constitution
+        </option>
+        <option value={RollTypeEnum.savingThrow_Intelligence}>
+          Intelligence
+        </option>
+        <option value={RollTypeEnum.savingThrow_Wisdom}>Wisdom</option>
+        <option value={RollTypeEnum.savingThrow_Charisma}>Charisma</option>
+        <option value={RollTypeEnum.savingThrow_Death}>Death</option>
+      </optgroup>
+      <optgroup label="Ability Checks">
+        <option value={RollTypeEnum.ability_Strength}>Strength</option>
+        <option value={RollTypeEnum.ability_Dexterity}>Dexterity</option>
+        <option value={RollTypeEnum.ability_Constitution}>Constitution</option>
+        <option value={RollTypeEnum.ability_Intelligence}>Intelligence</option>
+        <option value={RollTypeEnum.ability_Wisdom}>Wisdom</option>
+        <option value={RollTypeEnum.ability_Charisma}>Charisma</option>
+      </optgroup>
+      <optgroup label="Attacks">
+        <option value={RollTypeEnum.attack_Melee}>Melee</option>
+        <option value={RollTypeEnum.attack_Ranged}>Ranged</option>
+        <option value={RollTypeEnum.attack_Spell}>Spell</option>
+      </optgroup>
+      <optgroup label="Other">
+        <option value={RollTypeEnum.other_Damage}>Damage</option>
+        <option value={RollTypeEnum.other_Initiative}>Initiative</option>
+        {props.player == PlayerEnum.aaron && (
+          <option value={RollTypeEnum.other_SecondWind}>Second Wind</option>
+        )}
+        {props.player == PlayerEnum.tegg && (
+          <option value={RollTypeEnum.other_HaloOfSpores}>
+            Halo of Spores (Damage)
+          </option>
+        )}
+        <option value={RollTypeEnum.other_Custom}>Custom</option>
+      </optgroup>
+    </>
+  );
 };
