@@ -41,7 +41,7 @@ export const appRouter = router({
     .mutation(async (opts) => {
       console.log(opts.input.hit);
       const orm = opts.ctx.orm;
-      const roll = opts.input;
+      const roll = advantageChecker({ ...opts.input, _id: 0 });
       const row = orm.em.create(Rolls, {
         player: roll.player,
         rollType: roll.rollType,
@@ -83,13 +83,17 @@ export const appRouter = router({
     )
     .mutation(async (opts) => {
       const orm = opts.ctx.orm;
-      const roll = opts.input;
+      const roll = advantageChecker({ ...opts.input, session: 0 });
       const ref = orm.em.getReference(Rolls, roll._id);
       ref.player = roll.player;
       ref.rollType = roll.rollType;
       ref.advantageStatus = roll.advantageStatus;
       if (roll.naturalRoll !== undefined) ref.naturalRoll = roll.naturalRoll;
-      if (roll.naturalRollAdvantage !== undefined)
+      // overwrite incorrect advantage
+      if (
+        roll.naturalRollAdvantage !== undefined ||
+        ref.naturalRollAdvantage !== undefined
+      )
         ref.naturalRollAdvantage = roll.naturalRollAdvantage;
       if (roll.finalRoll !== undefined) ref.finalRoll = roll.finalRoll;
       if (roll.hit !== undefined) ref.hit = roll.hit;
@@ -149,3 +153,38 @@ export const appRouter = router({
 });
 // export type definition of API
 export type AppRouter = typeof appRouter;
+
+function advantageChecker(roll: {
+  player: PlayerEnum;
+  rollType: RollTypeEnum;
+  advantageStatus: AdvantageEnum;
+  note: string;
+  session: number;
+  naturalRoll?: number | undefined;
+  naturalRollAdvantage?: number | undefined;
+  finalRoll?: number | undefined;
+  hit?: boolean | undefined;
+  damage?: number | undefined;
+  _id: number;
+}) {
+  if (roll.naturalRollAdvantage !== undefined) {
+    const temp = roll.naturalRollAdvantage;
+    // make naturalRoll be the chosen base roll
+    if (roll.naturalRoll !== undefined) {
+      if (
+        (roll.advantageStatus == AdvantageEnum.advantage &&
+          roll.naturalRoll < roll.naturalRollAdvantage) ||
+        (roll.advantageStatus == AdvantageEnum.disadvantage &&
+          roll.naturalRoll > roll.naturalRollAdvantage)
+      ) {
+        roll.naturalRollAdvantage = roll.naturalRoll;
+        roll.naturalRoll = temp;
+      }
+    }
+    // clear advantage roll if not allowed
+    if (roll.advantageStatus === AdvantageEnum.normal) {
+      roll.naturalRollAdvantage = undefined;
+    }
+  }
+  return roll;
+}

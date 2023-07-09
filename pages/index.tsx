@@ -14,7 +14,7 @@ import {
   Title,
   Tooltip,
 } from "chart.js";
-import { Bar } from "react-chartjs-2";
+import { Bar, Chart } from "react-chartjs-2";
 import { trpcNext } from "../utils/trpc";
 import { PlayerEnum } from "../utils/definitions";
 import { Rolls } from "../entities/rolls";
@@ -23,6 +23,7 @@ ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
+  PointElement,
   Title,
   Tooltip,
   Legend,
@@ -33,23 +34,67 @@ export default function IndexPage() {
   const maxSession = parseInt(process.env.NEXT_PUBLIC_SESSION_NUMBER || "1");
   const { data, error, isError, isLoading } = trpcNext.getRows.useQuery(0);
   const [session, setSession] = useState(0);
-  const [rollData, setRollData] = useState({
-    labels: Object.values(PlayerEnum),
-    datasets: [
-      {
-        label: "Average D20 Rolls",
-        data: formatData(data?.rows, session),
-      },
-    ],
+  const [rollData, setRollData] = useState(() => {
+    const rolls = getD20RollValues(data?.rows, session);
+    return {
+      labels: Object.values(PlayerEnum),
+      datasets: [
+        {
+          type: "bar" as const,
+          label: "Average D20 Rolls",
+          data: rolls.average,
+          order: 2,
+        },
+        {
+          type: "scatter" as const,
+          label: "Minimum D20 Roll",
+          data: rolls.minimum,
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          borderWidth: 2,
+          order: 1,
+        },
+        {
+          type: "scatter" as const,
+          label: "Maximum D20 Roll",
+          data: rolls.maximum,
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          borderWidth: 2,
+          order: 1,
+        },
+      ],
+    };
   });
 
   useEffect(() => {
+    const rolls = getD20RollValues(data?.rows, session);
     setRollData({
       labels: Object.values(PlayerEnum),
       datasets: [
         {
+          type: "bar" as const,
           label: "Average D20 Rolls",
-          data: formatData(data?.rows, session),
+          data: rolls.average,
+          order: 2,
+        },
+        {
+          type: "scatter" as const,
+          label: "Minimum D20 Roll",
+          data: rolls.minimum,
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          borderWidth: 2,
+          order: 1,
+        },
+        {
+          type: "scatter" as const,
+          label: "Maximum D20 Roll",
+          data: rolls.maximum,
+          pointRadius: 7,
+          pointHoverRadius: 10,
+          borderWidth: 2,
+          order: 1,
         },
       ],
     });
@@ -134,47 +179,99 @@ const SessionOptions = function (props: ISessionProps) {
 };
 
 const MyChart = function ({ data }: any) {
-  return <Bar data={data} />;
+  return <Chart type="bar" data={data} />;
 };
 
-const formatData = function (rows: Rolls[] | undefined, session: number) {
-  let aaron = { rolls: 0, totalRoll: 0 },
-    connor = { rolls: 0, totalRoll: 0 },
-    tegg = { rolls: 0, totalRoll: 0 },
-    thomas = { rolls: 0, totalRoll: 0 };
+const getD20RollValues = function (rows: Rolls[] | undefined, session: number) {
+  const playerList: Array<{
+    rolls: number;
+    totalRoll: number;
+    minimumRoll: number | undefined;
+    maximumRoll: number | undefined;
+  }> = [
+    {
+      rolls: 0,
+      totalRoll: 0,
+      minimumRoll: undefined,
+      maximumRoll: undefined,
+    },
+    {
+      rolls: 0,
+      totalRoll: 0,
+      minimumRoll: undefined,
+      maximumRoll: undefined,
+    },
+    {
+      rolls: 0,
+      totalRoll: 0,
+      minimumRoll: undefined,
+      maximumRoll: undefined,
+    },
+    {
+      rolls: 0,
+      totalRoll: 0,
+      minimumRoll: undefined,
+      maximumRoll: undefined,
+    },
+  ];
   if (rows === undefined) return {};
   const selectedRow = rows.filter((row) => {
     if (session == 0) return true;
     return row.session == session;
   });
   selectedRow.forEach((element) => {
+    let playerNumber = 0;
     switch (element.player) {
       case PlayerEnum.aaron:
-        if (element.naturalRoll !== undefined) aaron.rolls++;
-        aaron.totalRoll += element.naturalRoll || 0;
+        playerNumber = 0;
         break;
       case PlayerEnum.connor:
-        if (element.naturalRoll !== undefined) connor.rolls++;
-        connor.totalRoll += element.naturalRoll || 0;
+        playerNumber = 1;
         break;
       case PlayerEnum.tegg:
-        if (element.naturalRoll !== undefined) tegg.rolls++;
-        tegg.totalRoll += element.naturalRoll || 0;
+        playerNumber = 2;
         break;
       case PlayerEnum.thomas:
-        if (element.naturalRoll !== undefined) thomas.rolls++;
-        thomas.totalRoll += element.naturalRoll || 0;
+        playerNumber = 3;
         break;
     }
+    if (element.naturalRoll !== undefined) {
+      playerList[playerNumber].rolls++;
+
+      playerList[playerNumber].totalRoll += element.naturalRoll;
+      const min = playerList[playerNumber].minimumRoll;
+      if (min === undefined || min > element.naturalRoll) {
+        playerList[playerNumber].minimumRoll = element.naturalRoll;
+      }
+      const max = playerList[playerNumber].maximumRoll;
+      if (max === undefined || max < element.naturalRoll) {
+        playerList[playerNumber].maximumRoll = element.naturalRoll;
+      }
+    }
   });
-  if (aaron.rolls === 0) aaron.rolls = 1;
-  if (connor.rolls === 0) connor.rolls = 1;
-  if (tegg.rolls === 0) tegg.rolls = 1;
-  if (thomas.rolls === 0) thomas.rolls = 1;
+  if (playerList[0].rolls === 0) playerList[0].rolls = 1;
+  if (playerList[1].rolls === 0) playerList[1].rolls = 1;
+  if (playerList[2].rolls === 0) playerList[2].rolls = 1;
+  if (playerList[3].rolls === 0) playerList[3].rolls = 1;
+
   return {
-    aaron: aaron.totalRoll / aaron.rolls,
-    connor: connor.totalRoll / connor.rolls,
-    tegg: tegg.totalRoll / tegg.rolls,
-    thomas: thomas.totalRoll / thomas.rolls,
+    average: {
+      aaron: playerList[0].totalRoll / playerList[0].rolls,
+      connor: playerList[1].totalRoll / playerList[1].rolls,
+      tegg: playerList[2].totalRoll / playerList[2].rolls,
+      thomas: playerList[3].totalRoll / playerList[3].rolls,
+    },
+    minimum: {
+      aaron: playerList[0].minimumRoll,
+      connor: playerList[1].minimumRoll,
+      tegg: playerList[2].minimumRoll,
+      thomas: playerList[3].minimumRoll,
+    },
+    maximum: {
+      aaron: playerList[0].maximumRoll,
+      connor: playerList[1].maximumRoll,
+      tegg: playerList[2].maximumRoll,
+      thomas: playerList[3].maximumRoll,
+    },
   };
 };
