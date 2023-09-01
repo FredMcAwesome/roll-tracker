@@ -13,7 +13,7 @@ interface IProps {
 export default function RollInput({ session }: IProps) {
   const [player, setPlayer] = useState<PlayerEnum>(PlayerEnum.aaron);
   const [rollType, setRollType] = useState<RollTypeEnum>(
-    RollTypeEnum.skill_Acrobatics
+    RollTypeEnum.attack_Melee
   );
   const [advantageStatus, setAdvantageStatus] = useState<AdvantageEnum>(
     AdvantageEnum.normal
@@ -175,6 +175,7 @@ export const EditableRow = function (props: IOtherProps) {
       case RollTypeEnum.attack_Spell:
       case RollTypeEnum.other_Damage:
       case RollTypeEnum.other_HaloOfSpores:
+      case RollTypeEnum.healing:
         return false;
       default:
         return true;
@@ -337,6 +338,19 @@ export interface ISkillCheckProps {
 export const SkillCheckOptions = function (props: ISkillCheckProps) {
   return (
     <>
+      {props.player == PlayerEnum.tegg && (
+        <option value={RollTypeEnum.other_HaloOfSpores}>
+          Halo of Spores (Damage)
+        </option>
+      )}
+      <optgroup label="Attacks">
+        <option value={RollTypeEnum.attack_Melee}>Melee</option>
+        <option value={RollTypeEnum.attack_Ranged}>Ranged</option>
+        <option value={RollTypeEnum.attack_Spell}>Spell</option>
+      </optgroup>
+      <optgroup label="Healing">
+        <option value={RollTypeEnum.healing}>Healing</option>
+      </optgroup>
       <optgroup label="Skill Checks">
         <option value={RollTypeEnum.skill_Acrobatics}>Acrobatics</option>
         <option value={RollTypeEnum.skill_AnimalHandling}>
@@ -383,22 +397,9 @@ export const SkillCheckOptions = function (props: ISkillCheckProps) {
         <option value={RollTypeEnum.ability_Wisdom}>Wisdom</option>
         <option value={RollTypeEnum.ability_Charisma}>Charisma</option>
       </optgroup>
-      <optgroup label="Attacks">
-        <option value={RollTypeEnum.attack_Melee}>Melee</option>
-        <option value={RollTypeEnum.attack_Ranged}>Ranged</option>
-        <option value={RollTypeEnum.attack_Spell}>Spell</option>
-      </optgroup>
       <optgroup label="Other">
         <option value={RollTypeEnum.other_Damage}>Damage</option>
         <option value={RollTypeEnum.other_Initiative}>Initiative</option>
-        {props.player == PlayerEnum.aaron && (
-          <option value={RollTypeEnum.other_SecondWind}>Second Wind</option>
-        )}
-        {props.player == PlayerEnum.tegg && (
-          <option value={RollTypeEnum.other_HaloOfSpores}>
-            Halo of Spores (Damage)
-          </option>
-        )}
         <option value={RollTypeEnum.other_Custom}>Custom</option>
       </optgroup>
     </>

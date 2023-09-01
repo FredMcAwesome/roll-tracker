@@ -74,6 +74,7 @@ export default function IndexPage() {
   });
   const [attackRollData, setAttackRollData] = useState(() => {
     const attackRolls = getAttackRollValues(data?.rows, session);
+    const healing = getHealing(data?.rows, session);
     return {
       labels: Object.values(PlayerEnum),
       datasets: [
@@ -101,6 +102,12 @@ export default function IndexPage() {
           borderWidth: 2,
           order: 1,
         },
+        {
+          type: "bar" as const,
+          label: "Total Healing",
+          data: healing,
+          order: 2,
+        },
       ],
     };
   });
@@ -108,6 +115,7 @@ export default function IndexPage() {
   useEffect(() => {
     const d20Rolls = getD20RollValues(data?.rows, session);
     const attackRolls = getAttackRollValues(data?.rows, session);
+    const healing = getHealing(data?.rows, session);
     setD20RollData({
       labels: Object.values(PlayerEnum),
       datasets: [
@@ -163,6 +171,12 @@ export default function IndexPage() {
           pointHoverRadius: 10,
           borderWidth: 2,
           order: 1,
+        },
+        {
+          type: "bar" as const,
+          label: "Total Healing",
+          data: healing,
+          order: 2,
         },
       ],
     });
@@ -497,73 +511,40 @@ const getAttackRollValues = function (
   };
 };
 
-export const SkillCheckOptions = function (props: ISkillCheckProps) {
-  return (
-    <>
-      <optgroup label="Skill Checks">
-        <option value={RollTypeEnum.skill_Acrobatics}>Acrobatics</option>
-        <option value={RollTypeEnum.skill_AnimalHandling}>
-          Animal Handling
-        </option>
-        <option value={RollTypeEnum.skill_Arcana}>Arcana</option>
-        <option value={RollTypeEnum.skill_Athletics}>Athletics</option>
-        <option value={RollTypeEnum.skill_Deception}>Deception</option>
-        <option value={RollTypeEnum.skill_History}>History</option>
-        <option value={RollTypeEnum.skill_Insight}>Insight</option>
-        <option value={RollTypeEnum.skill_Intimidation}>Intimidation</option>
-        <option value={RollTypeEnum.skill_Investigation}>Investigation</option>
-        <option value={RollTypeEnum.skill_Medicine}>Medicine</option>
-        <option value={RollTypeEnum.skill_Nature}>Nature</option>
-        <option value={RollTypeEnum.skill_Perception}>Perception</option>
-        <option value={RollTypeEnum.skill_Performance}>Performance</option>
-        <option value={RollTypeEnum.skill_Persuasion}>Persuasion</option>
-        <option value={RollTypeEnum.skill_Religion}>Religion</option>
-        <option value={RollTypeEnum.skill_SleightOfHand}>
-          Sleight of Hand
-        </option>
-        <option value={RollTypeEnum.skill_Stealth}>Stealth</option>
-        <option value={RollTypeEnum.skill_Survival}>Survival</option>
-        <option value={RollTypeEnum.skill_Tool}>Tool</option>
-      </optgroup>
-      <optgroup label="Saving Throw">
-        <option value={RollTypeEnum.savingThrow_Strength}>Strength</option>
-        <option value={RollTypeEnum.savingThrow_Dexterity}>Dexterity</option>
-        <option value={RollTypeEnum.savingThrow_Constitution}>
-          Constitution
-        </option>
-        <option value={RollTypeEnum.savingThrow_Intelligence}>
-          Intelligence
-        </option>
-        <option value={RollTypeEnum.savingThrow_Wisdom}>Wisdom</option>
-        <option value={RollTypeEnum.savingThrow_Charisma}>Charisma</option>
-        <option value={RollTypeEnum.savingThrow_Death}>Death</option>
-      </optgroup>
-      <optgroup label="Ability Checks">
-        <option value={RollTypeEnum.ability_Strength}>Strength</option>
-        <option value={RollTypeEnum.ability_Dexterity}>Dexterity</option>
-        <option value={RollTypeEnum.ability_Constitution}>Constitution</option>
-        <option value={RollTypeEnum.ability_Intelligence}>Intelligence</option>
-        <option value={RollTypeEnum.ability_Wisdom}>Wisdom</option>
-        <option value={RollTypeEnum.ability_Charisma}>Charisma</option>
-      </optgroup>
-      <optgroup label="Attacks">
-        <option value={RollTypeEnum.attack_Melee}>Melee</option>
-        <option value={RollTypeEnum.attack_Ranged}>Ranged</option>
-        <option value={RollTypeEnum.attack_Spell}>Spell</option>
-      </optgroup>
-      <optgroup label="Other">
-        <option value={RollTypeEnum.other_Damage}>Damage</option>
-        <option value={RollTypeEnum.other_Initiative}>Initiative</option>
-        {props.player == PlayerEnum.aaron && (
-          <option value={RollTypeEnum.other_SecondWind}>Second Wind</option>
-        )}
-        {props.player == PlayerEnum.tegg && (
-          <option value={RollTypeEnum.other_HaloOfSpores}>
-            Halo of Spores (Damage)
-          </option>
-        )}
-        <option value={RollTypeEnum.other_Custom}>Custom</option>
-      </optgroup>
-    </>
-  );
+const getHealing = function (rows: Rolls[] | undefined, session: number) {
+  if (rows === undefined) return;
+  const selectedRow = rows.filter((row) => {
+    if (session == 0) return true;
+    return row.session == session;
+  });
+
+  const playerList: Array<number> = [0, 0, 0, 0];
+
+  selectedRow.forEach((element) => {
+    if (
+      element.rollType === RollTypeEnum.healing &&
+      element.damage !== undefined
+    ) {
+      switch (element.player) {
+        case PlayerEnum.aaron:
+          playerList[0] += element.damage;
+          break;
+        case PlayerEnum.connor:
+          playerList[1] += element.damage;
+          break;
+        case PlayerEnum.tegg:
+          playerList[2] += element.damage;
+          break;
+        case PlayerEnum.thomas:
+          playerList[3] += element.damage;
+          break;
+      }
+    }
+  });
+  return {
+    aaron: playerList[0],
+    connor: playerList[1],
+    tegg: playerList[2],
+    thomas: playerList[3],
+  };
 };

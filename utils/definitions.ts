@@ -53,7 +53,7 @@ export enum RollTypeEnum {
   attack_Spell = "attack_spell",
   other_Damage = "other_damage",
   other_Initiative = "other_initiative",
-  other_SecondWind = "other_secondWind",
   other_HaloOfSpores = "other_haloOfSpores",
   other_Custom = "other_custom",
+  healing = "healing",
 }
